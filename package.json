@@ -1,0 +1,19 @@
+{
+  "name": "tshirtstore",
+  "version": "1.0.0",
+  "description": "An ecommerce t-shirt selling store",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yashpatel4900/E-Commerce-Store.git"
+  },
+  "author": "Yash R. Patel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yashpatel4900/E-Commerce-Store/issues"
+  },
+  "homepage": "https://github.com/yashpatel4900/E-Commerce-Store#readme"
+}
