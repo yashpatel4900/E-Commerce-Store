@@ -1,7 +1,27 @@
 require("dotenv").config();
 const express = require("express");
+const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
+const fileUpload = require("express-fileupload");
 
 const app = express();
+
+// For swagger Documentation
+const swaggerUi = require("swagger-ui-express");
+const YAML = require("yamljs");
+const swaggerDocument = YAML.load("./swagger.yaml");
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// Regular Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Cookies and File Middleware
+app.use(cookieParser());
+app.use(fileUpload());
+
+// Morgan Middleware
+app.use(morgan("tiny"));
 
 // // // // // This was traditional way of doing things
 // app.get("/", (req, res) => {
