@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -51,6 +52,20 @@ const userSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+// encrypt password before save - PRE - HOOK
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+  this.password = await bcrypt.hash(this.password, 10);
+});
+
+// Validate (check whether the password send by user while logging in) the password with passed on user password
+// Just like PRE we have Methods to define any we want
+userSchema.methods.isValidatedPassword = async function (userSendPassword) {
+  return await bcrypt.compare(userSendPassword, this.password);
+};
 
 // What we export is - we call model method of mongoose which converts a given schema into a model and exports it
 module.exports = mongoose.model("User", userSchema);
