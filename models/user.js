@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -65,6 +67,33 @@ userSchema.pre("save", async function (next) {
 // Just like PRE we have Methods to define any we want
 userSchema.methods.isValidatedPassword = async function (userSendPassword) {
   return await bcrypt.compare(userSendPassword, this.password);
+};
+
+// Create and return JWT Token
+userSchema.methods.getJwtToken = async function () {
+  return await jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRY,
+  });
+};
+
+userSchema.methods.getForgotPasswordToken = function () {
+  // generate a long and random string
+  const forgotToken = crypto.randomByte(20).toString("hex");
+
+  // this.forgotPasswordToken = forgotToken;    VALID BUT FOR PROTECT WE USE HASHING
+  this.forgotPasswordToken = crypto
+    .createHash("sha256")
+    .update(forgotToken)
+    .digest("hex");
+
+  // NOTE: we are storing this cryptographic hash in database but are sending forgotToken to user
+  // so it is important to get the forgetToken from user while verification and again convert it using
+  // exact same hashing algorithm to compare and verify
+
+  this.forgotPasswordExpiry =
+    Date.now() + process.env.FORGOT_PASSWORD_EXPIRY_TIME;
+
+  return forgotToken;
 };
 
 // What we export is - we call model method of mongoose which converts a given schema into a model and exports it
