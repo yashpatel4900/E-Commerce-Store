@@ -55,13 +55,16 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// encrypt password before save - PRE - HOOK
+// // // // // // PRE - HOOK
+// encrypt password before save
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     return next();
   }
   this.password = await bcrypt.hash(this.password, 10);
 });
+
+// // // // // // METHODS
 
 // Validate (check whether the password send by user while logging in) the password with passed on user password
 // Just like PRE we have Methods to define any we want
@@ -76,6 +79,7 @@ userSchema.methods.getJwtToken = async function () {
   });
 };
 
+// Creat and store Forogt Password Token
 userSchema.methods.getForgotPasswordToken = function () {
   // generate a long and random string
   const forgotToken = crypto.randomByte(20).toString("hex");
