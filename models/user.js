@@ -30,11 +30,11 @@ const userSchema = new mongoose.Schema({
   photo: {
     id: {
       type: String,
-      required: [true, "Please upload your photo."],
+      // required: [true, "Please upload your photo."],
     },
     secure_id: {
       type: String,
-      required: [true],
+      // required: [true],
     },
   },
 
@@ -73,8 +73,8 @@ userSchema.methods.isValidatedPassword = async function (userSendPassword) {
 };
 
 // Create and return JWT Token
-userSchema.methods.getJwtToken = async function () {
-  return await jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+userSchema.methods.getJwtToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRY,
   });
 };

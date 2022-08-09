@@ -17,7 +17,7 @@ exports.signup = BigPromise(async (req, res, next) => {
     return next(new Error("Name, Email, Password are required fields."));
   }
 
-  const user = User.create({
+  const user = await User.create({
     name,
     email,
     password,
@@ -38,8 +38,6 @@ exports.signup = BigPromise(async (req, res, next) => {
   //     user,
   //   });
 
-  cookieToken(user, res);
+  CookieToken(user, res);
   // // // // // //
-
-  res.send("Signup Request");
 });
