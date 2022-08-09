@@ -7,8 +7,23 @@ const CookieToken = require("../utils/cookieToken");
 
 const BigPromise = require("../middlewares/bigPromise");
 
+// For Uploading Files, CLOUDINARY
+const fileUpload = require("express-fileUpload");
+const cloudinary = require("cloudinary");
+
 // // // // // Defining Signup API
 exports.signup = BigPromise(async (req, res, next) => {
+  // // // // // Grabing and Uploading Photo to Cloudinary
+  let result;
+  if (req.files) {
+    let file = req.files.photo;
+    result = await cloudinary.v2.UploadStream.upload(file, {
+      folder: "users",
+      width: 150,
+      crop: "scale",
+    });
+  }
+
   // Grabing required fields
   const { name, email, password } = req.body;
 
@@ -17,10 +32,18 @@ exports.signup = BigPromise(async (req, res, next) => {
     return next(new Error("Name, Email, Password are required fields."));
   }
 
+  if (await User.findOne({ email })) {
+    return next(new Error("Email is already registed, try to login."));
+  }
+
   const user = await User.create({
     name,
     email,
     password,
+    photo: {
+      id: result.public_id,
+      secure_id: result.secure_id,
+    },
   });
 
   // CONVERT THIS INTO A METHOD IN UTILS FOR REUSABILITY
