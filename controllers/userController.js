@@ -3,6 +3,7 @@ const User = require("../models/user");
 
 // Import customError
 const CustomError = require("../utils/customError");
+const CookieToken = require("../utils/cookieToken");
 
 const BigPromise = require("../middlewares/bigPromise");
 
@@ -22,19 +23,22 @@ exports.signup = BigPromise(async (req, res, next) => {
     password,
   });
 
+  // CONVERT THIS INTO A METHOD IN UTILS FOR REUSABILITY
   // // // Creating and send Token in cookies for Web and JSON for Mobile
-  const token = user.getJwtToken();
+  //   const token = user.getJwtToken();
 
-  const option = {
-    expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-    httpOnly: true,
-  };
+  //   const option = {
+  //     expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+  //     httpOnly: true,
+  //   };
 
-  res.status(200).cookie("token", token, option).json({
-    success: true,
-    token,
-    user,
-  });
+  //   res.status(200).cookie("token", token, option).json({
+  //     success: true,
+  //     token,
+  //     user,
+  //   });
+
+  cookieToken(user, res);
   // // // // // //
 
   res.send("Signup Request");
