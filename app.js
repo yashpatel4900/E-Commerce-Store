@@ -28,6 +28,9 @@ app.use(
 // Morgan Middleware
 app.use(morgan("tiny"));
 
+// EJS
+app.set("view engine", "ejs");
+
 // // // // // This was traditional way of doing things
 // app.get("/", (req, res) => {
 //   res.status(200).send("Helloji");
@@ -42,5 +45,10 @@ const user = require("./routes/user");
 // Router Middleware - REQUIRED
 app.use("/api/v1", home);
 app.use("/api/v1", user);
+
+// For testing only
+app.get("/signuptest", (req, res) => {
+  res.render("signuptest");
+});
 
 module.exports = app;
