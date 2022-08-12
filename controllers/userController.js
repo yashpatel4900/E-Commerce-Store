@@ -13,15 +13,9 @@ const cloudinary = require("cloudinary");
 
 // // // // // Defining Signup API
 exports.signup = BigPromise(async (req, res, next) => {
-  // // // // // Grabing and Uploading Photo to Cloudinary
-  let result;
-  if (req.files) {
-    let file = req.files.photo;
-    result = await cloudinary.v2.uploader.upload(file.tempFilePath, {
-      folder: "users",
-      width: 150,
-      crop: "scale",
-    });
+  // Making sure user sends a photo while signing up
+  if (!req.files) {
+    return next(new Error("Photo is required for Signup."));
   }
 
   // Grabing required fields
@@ -36,13 +30,21 @@ exports.signup = BigPromise(async (req, res, next) => {
     return next(new Error("Email is already registed, try to login."));
   }
 
+  // // // // // Grabing and Uploading Photo to Cloudinary
+  let file = req.files.photo;
+  let result = await cloudinary.v2.uploader.upload(file.tempFilePath, {
+    folder: "users",
+    width: 150,
+    crop: "scale",
+  });
+
   const user = await User.create({
     name,
     email,
     password,
     photo: {
       id: result.public_id,
-      secure_id: result.secure_id,
+      secure_url: result.secure_url,
     },
   });
 

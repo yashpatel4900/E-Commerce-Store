@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
       type: String,
       // required: [true, "Please upload your photo."],
     },
-    secure_id: {
+    secure_url: {
       type: String,
       // required: [true],
     },
