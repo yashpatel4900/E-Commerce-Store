@@ -85,7 +85,7 @@ exports.login = BigPromise(async (req, res, next) => {
   }
 
   // Check if password is entered correctly
-  const isPasswordCorrect = user.isValidatedPassword(password);
+  const isPasswordCorrect = await user.isValidatedPassword(password);
 
   // If not Throw error
   if (!isPasswordCorrect) {
