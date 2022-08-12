@@ -66,3 +66,32 @@ exports.signup = BigPromise(async (req, res, next) => {
   CookieToken(user, res);
   // // // // // //
 });
+
+exports.login = BigPromise(async (req, res, next) => {
+  // Grab the email and password
+  const { email, password } = req.body;
+
+  // If any field is empty throw error
+  if (!email || !password) {
+    return next(new Error("Both, email and password are required fields."));
+  }
+
+  // Search in DB
+  const user = await User.findOne({ email }).select("+password");
+
+  // If no Record match throw error
+  if (!user) {
+    return next(new Error("Email and Password does not match or exist."));
+  }
+
+  // Check if password is entered correctly
+  const isPasswordCorrect = user.isValidatedPassword(password);
+
+  // If not Throw error
+  if (!isPasswordCorrect) {
+    return next(new Error("Email and Password does not match or exist."));
+  }
+
+  // If everything goes right create and send token as cookies.
+  CookieToken(user, res);
+});
