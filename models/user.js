@@ -79,12 +79,12 @@ userSchema.methods.getJwtToken = function () {
   });
 };
 
-// Creat and store Forogt Password Token
+// Create and store Forogt Password Token
 userSchema.methods.getForgotPasswordToken = function () {
   // generate a long and random string
-  const forgotToken = crypto.randomByte(20).toString("hex");
+  const forgotToken = crypto.randomBytes(20).toString("hex");
 
-  // this.forgotPasswordToken = forgotToken;    VALID BUT FOR PROTECT WE USE HASHING
+  // this.forgotPasswordToken is a database field which will be a hash of (forgotToken);    VALID BUT FOR PROTECT WE USE HASHING
   this.forgotPasswordToken = crypto
     .createHash("sha256")
     .update(forgotToken)

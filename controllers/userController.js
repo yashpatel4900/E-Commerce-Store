@@ -5,6 +5,9 @@ const User = require("../models/user");
 const CustomError = require("../utils/customError");
 const CookieToken = require("../utils/cookieToken");
 
+// Import mailHelper method from ./utils/emailHelper.js
+const mailHelper = require("../utils/emailHelper");
+
 const BigPromise = require("../middlewares/bigPromise");
 
 // For Uploading Files, CLOUDINARY
@@ -97,7 +100,6 @@ exports.login = BigPromise(async (req, res, next) => {
 });
 
 exports.logout = BigPromise(async (req, res, next) => {
-  
   // Set the token value to null and expire it immediately
   res.cookie("token", null, {
     expires: new Date(Date.now()),
@@ -108,4 +110,58 @@ exports.logout = BigPromise(async (req, res, next) => {
     success: true,
     message: "Logout successful.",
   });
+});
+
+exports.forgotPassword = BigPromise(async (req, res, next) => {
+  // Grab email from to body
+  const { email } = req.body;
+
+  // Find it in database
+  const user = await User.findOne({ email });
+
+  // If email is not found in database
+  if (!user) {
+    return next(new Error("Email not found as registered.", 400));
+  }
+
+  // Generate forgotToken using method defined in ./models/user.js
+  const forgotToken = user.getForgotPasswordToken();
+
+  // After generating forgotToken we get 3 values as per our defined method in ./models/user.js
+  // 1. forgotToken , 2. forgotPasswordToken , 3. forgotPasswordExpiry
+  // These all needs to be saved in database so await is used
+  // IMPORTANT: validateBeforeSave is used because name, email, password are set to be required
+  // before save so just to ignore that we need to use this flag
+  await user.save({ validateBeforeSave: false });
+
+  // Construct a Url to send in the email for password reset
+  const UrlToResetPassword = `${req.protocol}://${req.get(
+    "host"
+  )}/password/reset/${forgotToken}`;
+
+  // Construct message to send in email with Url
+  const message = `Copy and Paste this link to your Browser to reset you LCO account password \n\n ${UrlToResetPassword}`;
+
+  // Using Try Catch is IMPORTANT as sending email may go wrong
+  // IMPORTANT: If email is not sent, we need to set all generated field to undefine again
+  try {
+    await mailHelper({
+      emailTo: user.email,
+      subject: "LCO TShirt Store Password Reset",
+      message,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Email sent Successfully.",
+    });
+  } catch (error) {
+    user.forgotPasswordToken = undefined;
+    user.forgotPasswordExpiry = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    return next(
+      new Error(`Couldn't send email due to this error: ${error}, 500`)
+    );
+  }
 });
