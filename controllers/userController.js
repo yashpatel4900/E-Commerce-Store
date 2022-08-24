@@ -143,7 +143,7 @@ exports.forgotPassword = BigPromise(async (req, res, next) => {
   const message = `Copy and Paste this link to your Browser to reset you LCO account password \n\n ${UrlToResetPassword}`;
 
   // Using Try Catch is IMPORTANT as sending email may go wrong
-  // IMPORTANT: If email is not sent, we need to set all generated field to undefine again
+  // IMPORTANT: If email is not sent, we need to set all generated field to undefined again
   try {
     await mailHelper({
       emailTo: user.email,
