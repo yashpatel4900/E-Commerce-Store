@@ -6,7 +6,10 @@ var User = require("../models/user"); // Import customError
 
 var CustomError = require("../utils/customError");
 
-var CookieToken = require("../utils/cookieToken"); // Import mailHelper method from ./utils/emailHelper.js
+var CookieToken = require("../utils/cookieToken"); // Import Crypto
+
+
+var crypto = require("crypto"); // Import mailHelper method from ./utils/emailHelper.js
 
 
 var mailHelper = require("../utils/emailHelper");
@@ -223,7 +226,7 @@ exports.forgotPassword = BigPromise(function _callee4(req, res, next) {
 
         case 9:
           // Construct a Url to send in the email for password reset
-          UrlToResetPassword = "".concat(req.protocol, "://").concat(req.get("host"), "/password/reset/").concat(forgotToken); // Construct message to send in email with Url
+          UrlToResetPassword = "".concat(req.protocol, "://").concat(req.get("host"), "/api/v1/password/reset/").concat(forgotToken); // Construct message to send in email with Url
 
           message = "Copy and Paste this link to your Browser to reset you LCO account password \n\n ".concat(UrlToResetPassword); // Using Try Catch is IMPORTANT as sending email may go wrong
           // IMPORTANT: If email is not sent, we need to set all generated field to undefined again
@@ -263,4 +266,64 @@ exports.forgotPassword = BigPromise(function _callee4(req, res, next) {
       }
     }
   }, null, null, [[11, 17]]);
+});
+exports.passwordReset = BigPromise(function _callee5(req, res, next) {
+  var token, encryToken, user;
+  return regeneratorRuntime.async(function _callee5$(_context5) {
+    while (1) {
+      switch (_context5.prev = _context5.next) {
+        case 0:
+          token = req.params.token; // After grabing the token from the Emailed URL we are encrypting it again same as it was stored in database so
+          // that we can find the user based on it and verify to let him change the password
+
+          encryToken = crypto.createHash("sha256").update(token).digest("hex"); // MongoDB Query is used here so that if the time has not expired for the token then only a user will be returned
+
+          _context5.next = 4;
+          return regeneratorRuntime.awrap(User.findOne({
+            encryToken: encryToken,
+            forgotPasswordExpiry: {
+              $gt: Date.now()
+            }
+          }));
+
+        case 4:
+          user = _context5.sent;
+
+          if (user) {
+            _context5.next = 7;
+            break;
+          }
+
+          return _context5.abrupt("return", next(new Error("Either User does not exist or time to reset token has expired")));
+
+        case 7:
+          if (!(req.body.password != req.body.confirmPassword)) {
+            _context5.next = 9;
+            break;
+          }
+
+          return _context5.abrupt("return", next(new Error("Re-enter the passwords as they do not match with each other.")));
+
+        case 9:
+          // Updating password in database
+          user.password = req.body.password; // IMPORTANT: After updating password the tokens saved in database should be removed
+
+          user.forgotPasswordToken = undefined;
+          user.forgotPasswordExpiry = undefined; // Updating the User data
+
+          _context5.next = 14;
+          return regeneratorRuntime.awrap(user.save());
+
+        case 14:
+          res.status(200).json({
+            success: true,
+            message: "Password changed successful."
+          }); // CookieToken(user, res);
+
+        case 15:
+        case "end":
+          return _context5.stop();
+      }
+    }
+  });
 });

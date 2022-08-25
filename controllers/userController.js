@@ -5,6 +5,9 @@ const User = require("../models/user");
 const CustomError = require("../utils/customError");
 const CookieToken = require("../utils/cookieToken");
 
+// Import Crypto
+const crypto = require("crypto");
+
 // Import mailHelper method from ./utils/emailHelper.js
 const mailHelper = require("../utils/emailHelper");
 
@@ -137,7 +140,7 @@ exports.forgotPassword = BigPromise(async (req, res, next) => {
   // Construct a Url to send in the email for password reset
   const UrlToResetPassword = `${req.protocol}://${req.get(
     "host"
-  )}/password/reset/${forgotToken}`;
+  )}/api/v1/password/reset/${forgotToken}`;
 
   // Construct message to send in email with Url
   const message = `Copy and Paste this link to your Browser to reset you LCO account password \n\n ${UrlToResetPassword}`;
@@ -164,4 +167,49 @@ exports.forgotPassword = BigPromise(async (req, res, next) => {
       new Error(`Couldn't send email due to this error: ${error}, 500`)
     );
   }
+});
+
+exports.passwordReset = BigPromise(async (req, res, next) => {
+  const token = req.params.token;
+
+  // After grabing the token from the Emailed URL we are encrypting it again same as it was stored in database so
+  // that we can find the user based on it and verify to let him change the password
+  const encryToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  // MongoDB Query is used here so that if the time has not expired for the token then only a user will be returned
+  const user = await User.findOne({
+    encryToken,
+    forgotPasswordExpiry: { $gt: Date.now() },
+  });
+
+  // If Token has expired
+  if (!user) {
+    return next(
+      new Error("Either User does not exist or time to reset token has expired")
+    );
+  }
+
+  // If the password does not match
+  if (req.body.password != req.body.confirmPassword) {
+    return next(
+      new Error("Re-enter the passwords as they do not match with each other.")
+    );
+  }
+
+  // Updating password in database
+  user.password = req.body.password;
+
+  // IMPORTANT: After updating password the tokens saved in database should be removed
+  user.forgotPasswordToken = undefined;
+  user.forgotPasswordExpiry = undefined;
+
+  // Updating the User data
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Password changed successful.",
+  });
+
+  // CookieToken(user, res);
 });

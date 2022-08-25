@@ -44,7 +44,11 @@ const userSchema = new mongoose.Schema({
   },
 
   forgotPasswordToken: String,
-  forgotPasswordExpiry: Date,
+
+  // NOTE: This field stores current Date as milliseconds so it needs to be defined as Number
+  forgotPasswordExpiry: {
+    type: Number,
+  },
 
   createdAt: {
     type: Date,
@@ -95,7 +99,7 @@ userSchema.methods.getForgotPasswordToken = function () {
   // exact same hashing algorithm to compare and verify
 
   this.forgotPasswordExpiry =
-    Date.now() + process.env.FORGOT_PASSWORD_EXPIRY_TIME;
+    Date.now() + process.env.FORGOT_PASSWORD_EXPIRY_TIME * 60 * 1000;
 
   return forgotToken;
 };
